@@ -1,0 +1,454 @@
+---
+title: "Lasso graphique"
+date: "24/10/2018"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, echo=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages("inputenc")
+library(simone)
+#library(inputenc)
+```
+
+## Exercice 1 
+
+  1. Lisez le chapitre 17 du livre "The elements of Statistical Learning" : https://web.stanford.edu/~hastie/Papers/ESLII.pdf
+
+  2. Faire un résumé sous forme de 5 à 10  transparents (fichier rmd)  en anglais de la section 17.3.1 ou de la section 17.3.2 au choix.
+  
+  
+## 17.3.1 Estimation of the Parameters when the Graph Structure is Known 
+
+First we will set the basics
+
+my plan is as follows:
+
+1.what is an undirected graphical model ?
+
+2.Global Markov Properties on Undirected Graphs
+
+3.Examples of undirected graph models for continuous observations
+
+4.Estimation for the full graph
+
+5.Estimation for a sparse graph
+  
+## 1. what is an undirected graphical model ?
+
+* An undirected graphical model represents a distribution $P(X_1, ..., X_d)$ defined by an undirected graph H, and a set of positive potential functions ψc associated with the cliques of H, s.t.
+
+$p(x_1,...,x_d)=\frac{1}{Z}\prod_{c \in C}ψc(x_c)$
+
+where C is the set of maximal cliques, and the positive functions ψC (·) are called clique potentials. These are not in general density functions, but rather are affinities that capture the dependence in $X_C$ by scoring certain instances $x_C$ higher than others.
+
+where Z is known as the partition function. It is a normalization constant.
+
+$Z=\sum_{X_1,...,X_d}\prod_{c \in C}ψc(X_c)$
+
+* Also known as Markov Random Fields, Markov network.
+
+* The potential function can be understood as a contingency function of its arguments
+assigning "pre-probabilistic" score of their joint configuration.
+
+### Hammersley-Clifford Theorem
+
+Let P be a positive distribution over V, and H a Markov network graph over V. If H is
+an Independence map for P, then P is a Gibbs distribution over H.
+
+## 2.Global Markov Properties on Undirected Graphs
+
+* Let H be an undirected graph
+
+* C separates A and B if every path from a node in A into a node in B passes through a
+node in B :
+
+$sep_H (A;B|C)$.
+
+* A probability distribution satisfies the global Markov property if for any disjoint A, B,C, such that C separates A and B, A is independent of B given C :
+
+$I(H) = {A ⊥ B|C: sep_H(A; B|C)}$
+
+It turns out that the pairwise and global Markov properties of a graph are equivalent (for graphs with positive distributions). 
+
+## 3.Examples of undirected graph models for continuous observations
+
+* Here we consider Markov networks where all the variables are continuous
+* The Gaussian distribution is almost always used for such graphical models,
+because of its convenient analytical properties.
+
+$$X\sim \mathcal{N(\mu,\Sigma)}$$
+           
+* The Gaussian distribution represents at most second-order relationships, it automatically encodes a pairwise Markov graph.
+
+* The Gaussian distribution has the property that all conditional distributions are also Gaussian
+
+* One of the nice properties of the multivariate Gaussian distribution is that all its
+conditional distributions are Gaussian too.
+
+Let Y and z be such that $Z = (X_1, · · · , X_{p−1})$ and $Y = X_p$.Then we have the conditional distribution of Y give Z
+
+
+$$ Y|Z = z\sim \mathcal{N(\mu_{Y} + (z -\mu_Z)^T\Sigma_{ZZ}^{-1}\sigma_{ZY},\sigma_{YY}-\sigma_{ZY}^T\Sigma_{ZZ}^{-1}\sigma_{ZY}}$$
+
+Where we have partitioned $\Sigma$ as 
+
+$$\begin{equation}
+\Sigma=
+\begin{pmatrix}
+\Sigma_{ZZ} & \sigma_{ZY} \\
+\sigma_{ZY}^T & \sigma_{YY} 
+\end{pmatrix}
+\end{equation}$$
+
+
+
+
+
+Remark: $$\mu_{Y} + (z -\mu_Z)^T\Sigma_{ZZ}^{-1}\sigma_{ZY}$$ is exactly of the same form as the linear regression of Y over Z with $$\beta =\Sigma_{ZZ}^{-1}\sigma_{ZY}$$
+
+
+
+
+- with the same partition for $\Theta = \Sigma^{-1}$ and $\sigma$,since $\Theta\Sigma=I$
+
+ standard formulas for partitioned inverses give
+
+$$\theta_{ZY}= - \theta_{YY}\Sigma_{ZZ}^{-1}\sigma_{ZY}$$
+- with $\frac{1}{\theta_{YY}}=\sigma_{YY}-\sigma_{ZY}^T\Sigma_{ZZ}^{-1}\sigma_{ZY} > 0$.So that,
+
+$\beta =\Sigma_{ZZ}^{-1}\sigma_{ZY}=  \frac{-\theta_{ZY}}{\theta_{YY}}$
+
+- The conditional dependencies between Y and Z are described by the mean.The Zero coefficients of 
+$\theta_{ZY}$ leads to zero coefficients in $\beta$ (and reversely)
+
+- Finally,$\Theta$ captures all the second order structure that is needed to describe the
+conditional distribution.
+
+now that we have fixed the basics we are going to talk about estimating the parameters when the structure of the graph is known in the continuous case.
+
+## 4.Estimation for the full graph
+
+Given some realizations of X, we would like to estimate the parameters
+of an undirected graph that approximates their joint distribution. Suppose
+first that the graph is complete (fully connected). We assume that we have
+N multivariate normal realizations $x_i$,$i = 1,...,N$.
+
+-  Assumption : the graph is full, $\mu$ and $\Sigma^{-1}$ have no zero coefficients.
+
+-  The empirical covariance matrix is given by
+
+$$S_n=\frac{1}{N}\sum_{i=1}^N(x_i-\bar x)(x_i-\bar x)^T$$
+where $\bar x$ is the empirical mean.
+
+- The log-likelihood is given by
+
+$$L(\Theta) = log det(\Theta) − trace(S\Theta)$$
+up to an additive constant
+
+- And
+
+$$\frac{\partial}{\partial \theta}log det(\Theta)= \Theta^{-1} ;  \frac{\partial}{\partial \theta} trace(S\Theta)=S$$
+
+- So that the estimator of the maximum likelihood is $\Sigma=\Theta^{-1}=S$ 
+
+## 5.Estimation for a sparse graph
+
+The idea is based on linear regression, as inspired by (17.6) and (17.9)(ebook).
+In particular, suppose that we want to estimate the edge parameters $\theta_{ij}$ for
+the vertices that are joined to a given vertex i, restricting those that are not
+joined to be zero. Then it would seem that the linear regression of the node
+i values on the other relevant vertices might provide a reasonable estimate.
+But this ignores the dependence structure among the predictors in this
+regression. It turns out that if instead we use our current (model-based)
+estimate of the cross-product matrix of the predictors when we perform
+our regressions, this gives the correct solutions and solves the constrained
+maximum-likelihood problem exactly.
+
+
+- Generally, the graphs are sparse
+
+- If the graph structure is known and denoted E, the maximization of the likelihood
+leads to a quadratic optimization problem under equality constraints.
+
+$$log det(\Theta) − trace(S\Theta) − \sum_{(j,k)\not\in E}\gamma_{jk}\theta_{jk}$$
+- The gradient equation for maximizing can be written as  
+$$\Theta^{-1} − S − Γ = 0$$ using the fact that the derivative of $log det \Theta$ equals $\Theta^{-1}$ ,
+Γ is a matrix of Lagrange parameters with non-zero values for all pairs with edges
+absent.
+ 
+We will show how we can use regression to solve for $\Theta$ and its inverse
+$W=\Theta^{-1}$ one row and column at a time.
+
+### Ideas of the modified regression algorithm
+
+- We partition the matrices $\Theta$ and $\Sigma$ into two parts:
+      - Part 1 : the first p − 1 rows and columns
+      - Part 2 : the last row and columns
+  
+$$\begin{pmatrix}
+W_{11} & W_{12}\\
+W_{12}^T & W_{22}
+\end{pmatrix}
+\begin{pmatrix}
+\Theta_{11} & \Theta_{12}\\
+\Theta_{12}^T & \Theta_{22}
+\end{pmatrix}
+=
+\begin{pmatrix}
+I & 0\\
+0^T & 1
+\end{pmatrix}$$
+    
+  
+- This implies
+
+$$W_{12}=-W_{11}\theta_{12}/\theta_{22}=W_{11}\beta$$
+- Then, with empirical estimates, $$W_{11}\beta - s_{12}-\gamma_{12}=0$$
+
+- There are  $p−q$ non-zero elements in $\gamma_{12}$ (edges constrained to be zero), so that the
+previous equation is equivalent to
+
+$$\beta^*= (W^*_{11})^{-1}s^*_{12}$$
+- Furthermore,$\frac{1}{\theta_{22}}=W_{22} - W^T_{12}\beta$ and $W_{22}=s_{22}$ since the diagonal of Γ is zero.
+
+- This leads to a simple iterative algorithm.
+
+### A modified Regression Algorithm for Estimation of an Undirected Gaussian Graphical Model with Known Structure.
+
+1. Initialize $W = \hat{\Sigma}=S$
+2. Repeat for j=1,2,...,p,, until convergence.
+  (a) Partition the matrix W into part 1: all but the jth row and
+column, and part 2: the jth row and column.
+
+  (b) Solve $W^*_{11}\beta^* -s^*_{12}=0$ for the unconstrained edge parameters $\beta^*$ , using the reduced system of equations.Obtain
+$\hat{\beta}^*$ by padding $\hat{\beta}^*$ with zeros in the appropriate positions.
+
+  (c) Update $W_{12}=W_{11}\hat\beta$
+  
+3.In the final cycle (for each j) solve $\hat\theta_{12}= -\hat\beta\hat\theta_{12}$, with $1/\hat\theta_{22}=\hat\sigma_{22}-W^T_{12}\hat\beta$
+
+
+## Exemple 
+
+* S empirical covariance matrix
+* By applay the algorithm; ,in the modified regression for variable 1 in step (b), variable 3 is left out.The procedure quickly converged to the solutions:
+
+Note the zeroes in $\hat\Sigma^{-1}$, corresponding to the missing edges (1,3) and (2,4).Note also that the corresponding elements in $\hat\Sigma$ are the only elements different from $S$. The estimation of $\hat\Sigma$ is an example of what is sometimes called the positive definite “completion” of $S$.
+
+$$ S=
+\begin{pmatrix}
+10 & 1 & 5 & 1\\
+1 & 10 & 2 & 6\\
+5 & 2 & 10 & 3\\
+4 & 6 & 3 & 10
+\end{pmatrix}
+$$
+
+
+$$\hat\Sigma =
+\begin{pmatrix}
+10.00 & 1.00 & 1.31 & 4\\
+1.00 & 10.00 & 2.00 & 0.87\\
+1.31 & 2.00 & 10.00 & 3.00\\
+4.00 & 0.87 & 3.00 & 10.00
+\end{pmatrix}$$
+
+
+
+$$\hat\Sigma^{-1} =
+\begin{pmatrix}
+0.12 & -0.01 &  0.00 & -0.05\\
+-0.01& 0.11 & -0.02 & 0.00\\
+ 0.00 & -0.02 & 0.11 & -0.03\\
+-0.05 & 0.00 & -0.03 & 0.13
+\end{pmatrix}$$
+
+
+
+
+
+
+## Exercice 2 
+  1. Simuler des données suivant un modèle graphique gaussien à l'aide de la fonction `rTranscriptData` du package R `simone`
+```{r}
+rm(list=ls())
+```
+  
+  
+```{r}
+#install.packages('simone')
+library(simone)
+```
+  
+
+```{r, warning=FALSE}
+set.seed(2)
+p <- 11
+g <- rNetwork(p,pi=0.2, name="Graphe Théorique")
+plot(g) 
+data <- rTranscriptData(n=1500,g, sigma=0)
+```
+ 
+
+2. Utiliser un lasso graphique avec une pénalité de 0.1 (disponible dans les packages `simone` ou `glasso`) pour inférer un graphe d'indépendances conditionnelles. Comparer votre graphe inféré et le graphe théorique en terme d'arêtes communes (Faux positifs, vrais positifs, faux négatifs, vrais négatifs). Attention il faut simplement évaluer les arêtes communes et la diagonale ne compte pas.
+ 
+
+```{r}
+#simone(data$X,control=setOptions(penalties=0.1,edges.steady="graphical.lasso"))
+control <- setOptions(penalties= 0.1, edges.steady="graphical.lasso")
+theta.simone <- simone(data$X, control=control)$networks[[1]] # SIMoNe
+
+net.simone <- structure(list(A        = sign(theta.simone),
+                             Theta    = theta.simone,
+                             directed = FALSE,
+                             clusters = factor(rep("N",p)),
+                             name     = "inference graph", class="simone.network"))
+``` 
+ 
+# comparaison des deux graphes
+
+```{r}
+g_inference<- getNetwork(simone(data$X, control=control))
+plot(g_inference,g)
+```
+Ici on peut observer que pour une pénalité de 0.1 on a aucune difference de liaisons entre le graphe théorique et le graphe inféré.
+
+```{r}
+table(abs(net.simone$A))
+table(g$A)
+
+table(abs(net.simone$A),g$A)
+```
+  
+  
+```{r}
+#nombre d'incohérence de signe 
+sum(sign(theta.simone) != sign(g$Theta))
+```
+
+```{r}
+library(matrixcalc)
+A=abs(net.simone$A)
+is.symmetric.matrix(A);is.symmetric.matrix(g$A)
+```
+
+Pour construire la matrice de confusion,nous avons pris la partie superieure des matrices adjacents des differents graphes.
+
+legend:
+
+* 1<-arête(positif)
+* O<- pas d'arête (négatif)
+
+```{r}
+# matrice de confusion 
+
+m=table(graphe_infere=A[upper.tri(A, diag=F)],graphe_theorique=g$A[upper.tri(g$A, diag=F)])
+m
+```
+
+3. Tracer une courbe précision-rappel pour 100 pénalités différentes.
+
+```{r}
+plot(simone(data$X, type="steady-state"), output=c("path.penalty",'ROC'), ref.graph=g$A)
+
+```
+Autre simulation à la main:
+```{r,exclude=TRUE}
+courbe=function(data){
+net.simone=c()
+theta.simone=c()
+a=c()
+matrix_conf=list()
+prec=vector()
+rappel=vector()
+for (i in seq(0,1,length.out=100)){
+  control <- setOptions(penalties=i, edges.steady="graphical.lasso")
+  theta.simone <- simone(data, control=control)$networks[[1]]
+  net.simone <- structure(list(A        = sign(theta.simone),
+                             Theta    = theta.simone,
+                             directed = FALSE,
+                            name     = "simone package"), class="simone.network")
+  
+ a=abs(net.simone$A)
+ matrix_conf=table(graphe_infere=a[upper.tri(a, diag=F)],graphe_theorique=g$A[upper.tri(g$A, diag=F)])
+ if (length( matrix_conf)==4){
+  TP= matrix_conf[2,2]
+  TN= matrix_conf[1,1]
+  FN= matrix_conf[1,2]
+  FP= matrix_conf[2,1]
+  prec1= TP/(TP+FP)
+  rappel1=TP/(TP+FN)
+  prec=append(prec,prec1)
+  rappel=append(rappel,rappel1)
+  }
+  else{
+  prec1=0
+  rappel1=0
+  }
+ #plot(net.simone)
+ #print(matrix_conf)
+ #print(prec)
+ #print(rappel)
+}
+return(plot(prec~rappel,type ="b",pch = 16))
+}
+```
+
+ 
+
+ 
+4. Télécharger les données "Protein flow cytometry data" du site https://web.stanford.edu/~hastie/ElemStatLearn/data.html . Inférer et afficher les réseaux d'indépendances conditionnelles obtenus  pour des pénalités différentes. 
+
+
+```{r}
+data1=read.table("https://web.stanford.edu/~hastie/ElemStatLearn/datasets/sachs.data",sep="",header = FALSE)
+
+names(data1)=c("praf","pmek","plcg","PIP2","PIP3","p44/42","pakts473","PKA","PKC","P38","pjnk")
+```
+
+Description des données
+
+```{r}
+#View(data1)
+str(data1)
+barplot(as.matrix(data1))
+```
+```{r}
+cor(data1)
+```
+Ici on peut déjà voir une forte corrélation entre certaines protéines.
+
+
+
+```{r}
+control=setOptions(penalties=0,edges.steady="graphical.lasso")
+nr<- getNetwork(simone(data1, control=control))
+plot(nr)
+for (i in c(0.001,0.01,0.02,0.03,0.20,0.6,0.7,0.8,0.9)){
+  m=c()
+  m=getNetwork(simone(data1,control=setOptions(penalties=i,edges.steady="graphical.lasso")))
+  plot(m)
+  plot(m,nr)
+}
+```
+
+ 
+5. Discuter vos résultats.
+
+Comparaison entre les graphes inférés de pénalité différentes.Les couleurs, rouge et bleu, représentent le signe de la corrélation partielle(négative ou positive).On peut endéduire que plus l'ecard est pétite entre les pénalités,plus il y'a de d'intersection communes.
+La complexité des réseaux reflète la multitude des fonctions qu’ils régulent et rend leur caractérisation difficile à interpreter.
+
+Chercher la structure du graphe de concentration revient à chercher les coeffs non nuls de la regression de chaque variable sur les autres.Et d'autre part on cherche à trouver la pénalité qui permet de mieux représenter la structure de notre graphe
+
+Quelle pénalité choisir?
+sélection d’un graphe parmi les familles construites par minimisation d’un critère pénalisé.
+
+* Pour α ≥ 1, le problème de minimisation est convexe.
+
+* Pour α ≤ 1, la solution du problème est sparse.
+
+un autre critère de sélection de la pénalité est BIC et l'AIC.
